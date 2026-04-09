@@ -1,0 +1,57 @@
+{
+  "nav": { "write": "쓰기", "dashboard": "성장", "vocabulary": "단어장", "settings": "설정", "signIn": "로그인", "startWriting": "쓰기 시작" },
+  "landing": {
+    "badge": "일석이조",
+    "headline": "글쓰기로",
+    "headlineHighlight": "성장하기",
+    "subheadline": "영어 글쓰기를 연마하면서 자신을 발견하세요. 일기, 관찰, 에세이 — 무엇을 쓰든 IELTS급 전문 피드백을 받아보세요.",
+    "cta": "여정 시작하기", "ctaSecondary": "자세히 보기", "trusted": "전 세계", "countries": "12개국 이상의 사용자",
+    "feature1Title": "전문 피드백", "feature1Desc": "IELTS 시험관 수준의 채점. 평가, 교정, 고급 재작성, 어휘 추출의 4단계 분석.",
+    "feature2Title": "자기 성장", "feature2Desc": "글쓰기는 거울입니다. 감정을 추적하고, 패턴을 발견하고, AI 기반 성장 인사이트를 받아보세요.",
+    "feature3Title": "스마트 어휘", "feature3Desc": "재작성에서 자동 추출된 표현을 CEFR 레벨별로 정리. 간격 반복으로 효율적 복습.",
+    "feature4Title": "프라이버시 우선", "feature4Desc": "엔드투엔드 암호화. 당신의 일기는 오직 당신의 것. 저희도 읽을 수 없습니다.",
+    "howItWorks": "사용 방법",
+    "step1Title": "자유롭게 쓰기", "step1Desc": "하루의 이야기, 경험 되돌아보기, IELTS 에세이 연습. 주제도 스타일도 자유.",
+    "step2Title": "전문 피드백 받기", "step2Desc": "몇 초 안에 점수, 오류 교정, 고급 재작성, 새 어휘를 받아보세요.",
+    "step3Title": "성장과 성찰", "step3Desc": "아름다운 데이터 시각화로 글쓰기 발전과 자기 성장을 추적하세요.",
+    "privacyTitle": "당신의 글, 당신의 프라이버시",
+    "privacyDesc": "일기에는 절대적인 신뢰가 필요합니다. InkPath는 엔드투엔드 암호화를 사용합니다.",
+    "privacyBullet1": "모든 항목 엔드투엔드 암호화", "privacyBullet2": "AI 처리 후 영구 저장 없음",
+    "privacyBullet3": "원클릭 데이터 내보내기 및 삭제", "privacyBullet4": "개인 데이터 AI 학습 없음",
+    "pricingTitle": "심플한 요금제",
+    "free": "무료", "freePrice": "₩0", "freePeriod": "영구 무료",
+    "freeFeature1": "주 7회 작성", "freeFeature2": "점수 및 오류 교정", "freeFeature3": "기본 어휘 목록",
+    "plus": "플러스", "plusPrice": "₩4,200", "plusPeriod": "/월",
+    "plusFeature1": "무제한 작성", "plusFeature2": "완전한 4단계 피드백", "plusFeature3": "성장 모듈 및 인사이트",
+    "plusFeature4": "완전한 단어장", "plusFeature5": "주간 성장 리포트",
+    "pro": "프로", "proPrice": "₩26,900", "proPeriod": "/월",
+    "proFeature1": "플러스 모든 기능", "proFeature2": "프리미엄 AI (심층 분석)", "proFeature3": "IELTS 전문가 1:1 리뷰 세션",
+    "proFeature4": "고급 성장 분석", "proFeature5": "우선 처리", "proFeature6": "가이드 저널링",
+    "mostPopular": "가장 인기"
+  },
+  "write": {
+    "title": "오늘은 무엇을 쓸까요?",
+    "placeholder": "쓰기 시작... 일기, 관찰, 감상, 에세이 — 무엇이든 자유롭게.",
+    "submit": "피드백 받기", "wordCount": "단어", "mode": "모드",
+    "modes": { "free": "자유 글쓰기", "task1": "IELTS Task 1", "task2": "IELTS Task 2", "letter": "편지 / 이메일", "guided": "가이드" },
+    "timer": "타이머", "timerOff": "끄기",
+    "feedback": { "assessment": "평가", "corrections": "교정", "rewrite": "고급 재작성", "vocabulary": "어휘 및 표현",
+      "bandScore": "밴드 점수", "overall": "종합", "taskAchievement": "과제 달성도", "coherence": "일관성 및 응집력",
+      "lexical": "어휘력", "grammar": "문법 범위 및 정확성", "save": "단어장에 저장", "saved": "저장됨", "level": "레벨" },
+    "analyzing": "글쓰기를 분석 중...", "growthPrompt": "성찰 프롬프트"
+  },
+  "dashboard": {
+    "title": "나의 성장 여정", "streak": "연속 일수", "totalEntries": "총 항목", "avgBand": "평균 점수",
+    "vocabLearned": "학습 어휘", "bandProgress": "점수 추이", "writingFrequency": "글쓰기 빈도",
+    "emotionMap": "감정 지도", "themes": "테마", "weeklyInsight": "주간 인사이트",
+    "timeCapsule": "타임캡슐", "growthPaths": "성장 경로", "recentEntries": "최근 항목",
+    "moodTrend": "기분 트렌드", "topEmotions": "이번 주 주요 감정"
+  },
+  "vocabulary": {
+    "title": "나의 단어장", "search": "단어 검색...", "all": "전체", "mastered": "마스터", "learning": "학습 중",
+    "new": "새 단어", "review": "복습 시작", "export": "내보내기", "word": "단어", "meaning": "의미",
+    "context": "문맥", "level": "CEFR 레벨", "added": "추가일", "reviewDue": "복습 예정",
+    "noWords": "단어장이 비어 있습니다. 글쓰기를 시작해서 어휘를 쌓아보세요!"
+  },
+  "common": { "loading": "로딩 중...", "error": "문제가 발생했습니다", "retry": "다시 시도", "cancel": "취소", "save": "저장", "delete": "삭제", "back": "뒤로", "next": "다음", "previous": "이전" }
+}
