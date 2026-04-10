@@ -177,12 +177,13 @@ create trigger entries_touch_updated_at
 -- HELPER VIEWS
 -- ============================================================
 
--- Weekly entry count for free tier limits
-create or replace view public.weekly_usage as
+-- Monthly entry count for tier-based quota enforcement
+-- Free: 7/month, Plus: 60/month, Max: 300/month
+create or replace view public.monthly_usage as
 select
   user_id,
-  count(*) filter (where created_at > now() - interval '7 days') as entries_this_week
+  count(*) filter (where created_at >= date_trunc('month', now())) as entries_this_month
 from public.entries
 group by user_id;
 
-grant select on public.weekly_usage to authenticated;
+grant select on public.monthly_usage to authenticated;

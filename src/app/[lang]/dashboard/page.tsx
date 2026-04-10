@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { getDictionary, type Locale } from "@/lib/dictionaries";
 
@@ -219,7 +220,7 @@ export default function DashboardPage({
           e.content.trim().split(/\s+/).slice(0, 8).join(" ") +
           (e.content.trim().split(/\s+/).length > 8 ? "..." : "");
         const band = e.band_score ?? e.feedback?.assessment?.bandScore ?? 0;
-        return { date, title, band, emotion: "Reflective" };
+        return { id: e.id, date, title, band, emotion: "Reflective" };
       }),
     [entries]
   );
@@ -560,7 +561,15 @@ export default function DashboardPage({
           variants={itemVariants}
           className="col-span-2 md:col-span-4 lg:col-span-2 bg-surface border border-border rounded-2xl p-5 sm:p-6"
         >
-          <h2 className="text-sm font-semibold text-muted mb-4">{t.recentEntries}</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-muted">{t.recentEntries}</h2>
+            <Link
+              href={`/${lang}/entries`}
+              className="text-xs text-accent hover:underline font-medium"
+            >
+              View all →
+            </Link>
+          </div>
           <ul className="divide-y divide-border">
             {recentEntries.length === 0 && (
               <li className="py-6 text-center text-sm text-muted">
@@ -569,28 +578,32 @@ export default function DashboardPage({
             )}
             {recentEntries.map((entry, i) => (
               <motion.li
-                key={i}
-                className="flex items-center gap-3 py-3 first:pt-0 last:pb-0 cursor-pointer hover:bg-surface-hover -mx-3 px-3 rounded-lg transition-colors"
+                key={entry.id}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.08 * i, duration: 0.35 }}
               >
-                <div className="shrink-0 text-xs text-muted w-12">{entry.date}</div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{entry.title}</p>
-                </div>
-                <span
-                  className="shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full"
-                  style={{
-                    backgroundColor: `${emotionColors[entry.emotion] || "var(--accent)"}22`,
-                    color: emotionColors[entry.emotion] || "var(--accent)",
-                  }}
+                <Link
+                  href={`/${lang}/entries/${entry.id}`}
+                  className="flex items-center gap-3 py-3 first:pt-0 last:pb-0 hover:bg-surface-hover -mx-3 px-3 rounded-lg transition-colors"
                 >
-                  {entry.emotion}
-                </span>
-                <span className="shrink-0 text-xs font-semibold text-accent tabular-nums">
-                  {entry.band.toFixed(1)}
-                </span>
+                  <div className="shrink-0 text-xs text-muted w-12">{entry.date}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{entry.title}</p>
+                  </div>
+                  <span
+                    className="shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full"
+                    style={{
+                      backgroundColor: `${emotionColors[entry.emotion] || "var(--accent)"}22`,
+                      color: emotionColors[entry.emotion] || "var(--accent)",
+                    }}
+                  >
+                    {entry.emotion}
+                  </span>
+                  <span className="shrink-0 text-xs font-semibold text-accent tabular-nums">
+                    {entry.band.toFixed(1)}
+                  </span>
+                </Link>
               </motion.li>
             ))}
           </ul>

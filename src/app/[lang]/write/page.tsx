@@ -219,13 +219,32 @@ export default function WritePage({
   const [savedWords, setSavedWords] = useState<Set<string>>(new Set());
   const [feedback, setFeedback] = useState<FeedbackData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [quota, setQuota] = useState<{
+    tier: "free" | "plus" | "max";
+    limit: number;
+    used: number;
+    remaining: number;
+    exceeded: boolean;
+  } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const MIN_WORDS = 30;
 
   // Load dictionary
   useEffect(() => {
     getDictionary(lang as Locale).then(setDict);
   }, [lang]);
+
+  // Load quota (best-effort — silently fails if not signed in / not configured)
+  useEffect(() => {
+    fetch("/api/quota")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data && typeof data.limit === "number") setQuota(data);
+      })
+      .catch(() => {});
+  }, []);
 
   // Word count
   const wordCount = text
@@ -273,7 +292,7 @@ export default function WritePage({
 
   // Submit handler — calls real Claude API
   const handleSubmit = useCallback(async () => {
-    if (wordCount < 5) return;
+    if (wordCount < MIN_WORDS) return;
     setError(null);
     setPageState("loading");
     try {
@@ -283,7 +302,16 @@ export default function WritePage({
         body: JSON.stringify({ text, mode, lang }),
       });
       if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        const data = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          tier?: string;
+          limit?: number;
+        };
+        if (data.error === "monthly_quota_exceeded") {
+          throw new Error(
+            `You've used all ${data.limit} entries for this month on the ${data.tier} plan. Upgrade to keep writing.`
+          );
+        }
         throw new Error(data.error || `Request failed (${res.status})`);
       }
       const apiData = (await res.json()) as ApiFeedback;
@@ -298,6 +326,14 @@ export default function WritePage({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, mode, feedback: apiData }),
       }).catch(() => {});
+
+      // Refresh quota after a successful submission
+      fetch("/api/quota")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (data && typeof data.limit === "number") setQuota(data);
+        })
+        .catch(() => {});
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Something went wrong.";
       setError(msg);
@@ -751,12 +787,29 @@ export default function WritePage({
         </div>
 
         {/* Bottom Bar */}
-        <div className="flex items-center justify-between pt-4 border-t border-border mt-2 shrink-0">
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted">
-              <span className="font-semibold text-foreground">{wordCount}</span>{" "}
+        <div className="flex items-center justify-between pt-4 border-t border-border mt-2 shrink-0 gap-4">
+          <div className="flex items-center gap-4 min-w-0">
+            <span className="text-sm text-muted shrink-0">
+              <span
+                className={`font-semibold tabular-nums ${
+                  wordCount >= MIN_WORDS ? "text-accent" : "text-foreground"
+                }`}
+              >
+                {wordCount}
+              </span>
+              <span className="text-muted"> / {MIN_WORDS}</span>{" "}
               {t.wordCount}
             </span>
+            {quota && (
+              <span
+                className={`hidden sm:inline text-xs ${
+                  quota.remaining <= 1 ? "text-warning" : "text-muted"
+                }`}
+                title={`${quota.tier} plan`}
+              >
+                {quota.remaining} / {quota.limit} left this month
+              </span>
+            )}
             {pageState === "feedback" && (
               <button
                 onClick={handleReset}
@@ -767,19 +820,26 @@ export default function WritePage({
             )}
           </div>
 
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleSubmit}
-            disabled={wordCount < 5 || pageState === "loading"}
-            className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-              wordCount >= 5 && pageState !== "loading"
-                ? "bg-accent text-white hover:bg-accent-dark shadow-md shadow-accent/20 cursor-pointer"
-                : "bg-surface-hover text-muted cursor-not-allowed"
-            }`}
-          >
-            {pageState === "loading" ? t.analyzing : t.submit}
-          </motion.button>
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleSubmit}
+              disabled={wordCount < MIN_WORDS || pageState === "loading"}
+              className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                wordCount >= MIN_WORDS && pageState !== "loading"
+                  ? "bg-accent text-white hover:bg-accent-dark shadow-md shadow-accent/20 cursor-pointer"
+                  : "bg-surface-hover text-muted cursor-not-allowed"
+              }`}
+            >
+              {pageState === "loading" ? t.analyzing : t.submit}
+            </motion.button>
+            {wordCount < MIN_WORDS && pageState !== "loading" && (
+              <span className="text-[11px] text-muted">
+                {MIN_WORDS - wordCount} more {t.wordCount} to unlock
+              </span>
+            )}
+          </div>
         </div>
       </motion.div>
 

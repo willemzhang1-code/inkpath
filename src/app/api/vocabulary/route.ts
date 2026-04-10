@@ -63,12 +63,13 @@ interface UpdateVocabBody {
   id: string;
   mastery_status?: "new" | "learning" | "mastered";
   review_count?: number;
+  next_review_at?: string;
 }
 
 export async function PATCH(request: NextRequest) {
   try {
     const body = (await request.json()) as UpdateVocabBody;
-    const { id, mastery_status, review_count } = body;
+    const { id, mastery_status, review_count, next_review_at } = body;
 
     if (!id) {
       return NextResponse.json({ error: "id is required." }, { status: 400 });
@@ -85,6 +86,7 @@ export async function PATCH(request: NextRequest) {
     const update: Record<string, unknown> = {};
     if (mastery_status) update.mastery_status = mastery_status;
     if (typeof review_count === "number") update.review_count = review_count;
+    if (next_review_at) update.next_review_at = next_review_at;
     update.last_reviewed_at = new Date().toISOString();
 
     const { error } = await supabase

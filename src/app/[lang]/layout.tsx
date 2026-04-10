@@ -42,13 +42,23 @@ export default async function LangLayout({
   const { lang } = await params;
   const dict = await getDictionary(lang as Locale);
 
-  // Fetch user (gracefully handles missing Supabase config)
+  // Fetch user + tier (gracefully handles missing Supabase config)
   let userEmail: string | null = null;
+  let userTier: "free" | "plus" | "max" = "free";
   try {
     if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
       const supabase = await createClient();
       const { data } = await supabase.auth.getUser();
       userEmail = data.user?.email ?? null;
+      if (data.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("tier")
+          .eq("id", data.user.id)
+          .single();
+        const t = profile?.tier;
+        if (t === "plus" || t === "max") userTier = t;
+      }
     }
   } catch {
     // Auth not configured yet — render as logged-out
@@ -60,7 +70,12 @@ export default async function LangLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <Navigation lang={lang as Locale} dict={dict} userEmail={userEmail} />
+        <Navigation
+          lang={lang as Locale}
+          dict={dict}
+          userEmail={userEmail}
+          userTier={userTier}
+        />
         <main className="flex-1">{children}</main>
       </body>
     </html>

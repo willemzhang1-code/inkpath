@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { createClient } from "@/lib/supabase/server";
+import { getQuotaStatus, TIER_MONTHLY_QUOTA } from "@/lib/quota";
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                      */
@@ -217,9 +219,52 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const client = new Anthropic({ apiKey });
+    // Enforce minimum word count (matches UI hint)
+    const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
+    if (wordCount < 30) {
+      return NextResponse.json(
+        {
+          error: `Please write at least 30 words for meaningful feedback. You wrote ${wordCount}.`,
+        },
+        { status: 400 }
+      );
+    }
 
-    const wordCount = text.trim().split(/\s+/).length;
+    // Enforce monthly quota based on user tier.
+    // Only runs if Supabase is configured AND user is authenticated.
+    let quotaExceeded = false;
+    let quotaTier: "free" | "plus" | "max" = "free";
+    let quotaRemaining = TIER_MONTHLY_QUOTA.free;
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      try {
+        const supabase = await createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user) {
+          const status = await getQuotaStatus(supabase, user.id);
+          quotaTier = status.tier;
+          quotaRemaining = status.remaining;
+          quotaExceeded = status.exceeded;
+        }
+      } catch (err) {
+        console.error("Quota lookup failed (continuing):", err);
+      }
+    }
+
+    if (quotaExceeded) {
+      return NextResponse.json(
+        {
+          error: "monthly_quota_exceeded",
+          tier: quotaTier,
+          limit: TIER_MONTHLY_QUOTA[quotaTier],
+        },
+        { status: 429 }
+      );
+    }
+
+    const client = new Anthropic({ apiKey });
 
     const message = await client.messages.create({
       model: "claude-sonnet-4-6",

@@ -3,8 +3,6 @@ const dictionaries = {
   "zh-CN": () => import("@/dictionaries/zh-CN.json").then((m) => m.default),
   ja: () => import("@/dictionaries/ja.json").then((m) => m.default),
   ko: () => import("@/dictionaries/ko.json").then((m) => m.default),
-  vi: () => import("@/dictionaries/vi.json").then((m) => m.default),
-  th: () => import("@/dictionaries/th.json").then((m) => m.default),
 };
 
 export type Locale = keyof typeof dictionaries;
@@ -23,6 +21,4 @@ export const localeNames: Record<Locale, string> = {
   "zh-CN": "简体中文",
   ja: "日本語",
   ko: "한국어",
-  vi: "Tiếng Việt",
-  th: "ภาษาไทย",
 };

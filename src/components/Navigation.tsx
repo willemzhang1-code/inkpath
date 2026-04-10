@@ -11,9 +11,15 @@ interface NavigationProps {
   lang: Locale;
   dict: { nav: Record<string, string>; [key: string]: any };
   userEmail?: string | null;
+  userTier?: "free" | "plus" | "max";
 }
 
-export function Navigation({ lang, dict, userEmail }: NavigationProps) {
+export function Navigation({
+  lang,
+  dict,
+  userEmail,
+  userTier = "free",
+}: NavigationProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
@@ -21,6 +27,7 @@ export function Navigation({ lang, dict, userEmail }: NavigationProps) {
 
   const navItems = [
     { href: `/${lang}/write`, label: dict.nav.write, icon: "edit" },
+    { href: `/${lang}/entries`, label: dict.nav.entries ?? "Entries", icon: "journal" },
     { href: `/${lang}/dashboard`, label: dict.nav.dashboard, icon: "growth" },
     { href: `/${lang}/vocabulary`, label: dict.nav.vocabulary, icon: "book" },
   ];
@@ -42,6 +49,14 @@ export function Navigation({ lang, dict, userEmail }: NavigationProps) {
     book: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20" />
+      </svg>
+    ),
+    journal: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="9" y1="13" x2="15" y2="13" />
+        <line x1="9" y1="17" x2="13" y2="17" />
       </svg>
     ),
   };
@@ -107,7 +122,11 @@ export function Navigation({ lang, dict, userEmail }: NavigationProps) {
                         <Link
                           key={code}
                           href={pathname.replace(`/${lang}`, `/${code}`)}
-                          onClick={() => setLangOpen(false)}
+                          onClick={() => {
+                            // Persist the user's manual choice for 1 year
+                            document.cookie = `NEXT_LOCALE=${code}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
+                            setLangOpen(false);
+                          }}
                           className={`block px-4 py-2.5 text-sm transition-colors ${
                             code === lang
                               ? "text-accent font-medium bg-accent/5"
@@ -128,19 +147,20 @@ export function Navigation({ lang, dict, userEmail }: NavigationProps) {
               <div className="relative hidden sm:block">
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-surface-hover transition-all"
+                  className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-surface-hover transition-all"
                 >
-                  <div className="w-7 h-7 rounded-full bg-accent text-white flex items-center justify-center text-xs font-medium">
-                    {userEmail.charAt(0).toUpperCase()}
-                  </div>
+                  <TierAvatar tier={userTier} initial={userEmail.charAt(0).toUpperCase()} />
                 </button>
                 {userMenuOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
-                    <div className="absolute right-0 top-full mt-2 w-56 bg-surface border border-border rounded-xl shadow-lg py-2 z-50 animate-fade-in">
-                      <div className="px-4 py-2 border-b border-border">
-                        <p className="text-xs text-muted">Signed in as</p>
-                        <p className="text-sm font-medium truncate">{userEmail}</p>
+                    <div className="absolute right-0 top-full mt-2 w-60 bg-surface border border-border rounded-xl shadow-lg py-2 z-50 animate-fade-in">
+                      <div className="px-4 py-3 border-b border-border">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-xs text-muted">Signed in as</p>
+                          <TierPill tier={userTier} />
+                        </div>
+                        <p className="text-sm font-medium truncate mt-0.5">{userEmail}</p>
                       </div>
                       <form action={signOut.bind(null, lang)}>
                         <button
@@ -209,5 +229,86 @@ export function Navigation({ lang, dict, userEmail }: NavigationProps) {
         </div>
       )}
     </nav>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Tier Avatar — shows a gradient border + crown for paid users (Option C)
+// ---------------------------------------------------------------------------
+
+function TierAvatar({
+  tier,
+  initial,
+}: {
+  tier: "free" | "plus" | "max";
+  initial: string;
+}) {
+  if (tier === "free") {
+    return (
+      <div className="w-7 h-7 rounded-full bg-accent text-white flex items-center justify-center text-xs font-medium">
+        {initial}
+      </div>
+    );
+  }
+
+  const gradient =
+    tier === "max"
+      ? "from-amber-400 via-yellow-500 to-orange-500"
+      : "from-violet-500 via-fuchsia-500 to-purple-600";
+  const crownColor = tier === "max" ? "#f59e0b" : "#a855f7";
+
+  return (
+    <div className="relative">
+      {/* Gradient ring */}
+      <div
+        className={`p-[2px] rounded-full bg-gradient-to-br ${gradient}`}
+      >
+        <div className="w-7 h-7 rounded-full bg-accent text-white flex items-center justify-center text-xs font-medium border-2 border-surface">
+          {initial}
+        </div>
+      </div>
+      {/* Crown badge */}
+      <div
+        className="absolute -top-1.5 -right-1 rounded-full bg-surface p-[1px] shadow-sm"
+        aria-label={`${tier} member`}
+      >
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill={crownColor}
+          stroke={crownColor}
+          strokeWidth="1"
+          strokeLinejoin="round"
+        >
+          <path d="M2 20h20l-2-11-5 4-3-6-3 6-5-4-2 11z" />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+function TierPill({ tier }: { tier: "free" | "plus" | "max" }) {
+  if (tier === "free") {
+    return (
+      <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-surface-hover text-muted">
+        Free
+      </span>
+    );
+  }
+  const label = tier === "max" ? "Max" : "Plus";
+  const cls =
+    tier === "max"
+      ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white"
+      : "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white";
+  return (
+    <span
+      className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow-sm ${cls}`}
+    >
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M2 20h20l-2-11-5 4-3-6-3 6-5-4-2 11z" />
+      </svg>
+      {label}
+    </span>
   );
 }

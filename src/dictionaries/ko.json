@@ -1,5 +1,20 @@
 {
-  "nav": { "write": "쓰기", "dashboard": "성장", "vocabulary": "단어장", "settings": "설정", "signIn": "로그인", "startWriting": "쓰기 시작" },
+  "nav": { "write": "쓰기", "entries": "일기", "dashboard": "성장", "vocabulary": "단어장", "settings": "설정", "signIn": "로그인", "startWriting": "쓰기 시작" },
+  "entries": {
+    "title": "나의 일기",
+    "subtitle": "당신이 쓴 모든 항목을 IELTS급 재작성과 함께 저장합니다.",
+    "empty": "아직 항목이 없습니다. 첫 항목이 여기에 표시됩니다.",
+    "writeFirst": "쓰기 시작",
+    "original": "당신의 글",
+    "rewrite": "IELTS급 재작성",
+    "band": "밴드",
+    "words": "단어",
+    "delete": "삭제",
+    "deleteConfirm": "이 항목을 삭제하시겠습니까? 되돌릴 수 없습니다.",
+    "back": "일기 목록으로",
+    "reflection": "성찰",
+    "highlightsLegend": "강조 표시된 단어 = 재작성에서 업그레이드된 어휘"
+  },
   "landing": {
     "badge": "영어로 일기 쓰기 · IELTS급 첨삭 + 자기 성장 기록",
     "headline": "영어로 당신의 삶을 쓰세요.",
@@ -20,12 +35,12 @@
     "privacyBullet3": "원클릭 데이터 내보내기 및 삭제", "privacyBullet4": "개인 데이터 AI 학습 없음",
     "pricingTitle": "심플한 요금제",
     "free": "무료", "freePrice": "$0", "freePeriod": "영구 무료",
-    "freeFeature1": "주 7회 작성", "freeFeature2": "완전한 IELTS급 피드백", "freeFeature3": "단어장",
+    "freeFeature1": "월 7회 작성", "freeFeature2": "완전한 IELTS급 피드백", "freeFeature3": "단어장",
     "plus": "플러스", "plusPrice": "$2.99", "plusPeriod": "/월",
-    "plusFeature1": "무제한 작성", "plusFeature2": "완전한 4단계 피드백", "plusFeature3": "성장 대시보드 및 인사이트",
+    "plusFeature1": "월 60회 작성", "plusFeature2": "완전한 4단계 피드백", "plusFeature3": "성장 대시보드 및 인사이트",
     "plusFeature4": "단어 간격 반복 복습", "plusFeature5": "주간 진행 리포트",
     "max": "Max", "maxPrice": "$9.99", "maxPeriod": "/월",
-    "maxFeature1": "플러스 모든 기능", "maxFeature2": "프리미엄 AI (Claude Opus 심층 분석)", "maxFeature3": "최대 3000단어 장문 에세이",
+    "maxFeature1": "월 300회 작성", "maxFeature2": "프리미엄 AI (Claude Opus 심층 분석)", "maxFeature3": "최대 3000단어 장문 에세이",
     "maxFeature4": "우선 처리", "maxFeature5": "고급 성장 분석", "maxFeature6": "가이드 저널링",
     "mostPopular": "가장 인기"
   },

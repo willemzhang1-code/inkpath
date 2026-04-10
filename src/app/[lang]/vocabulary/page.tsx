@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback } from "react";
+import Link from "next/link";
 import { getDictionary, type Locale } from "@/lib/dictionaries";
 
 /* -------------------------------------------------------------------------- */
@@ -210,168 +211,6 @@ function VocabCard({
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Review Modal                                                               */
-/* -------------------------------------------------------------------------- */
-
-function ReviewModal({
-  items,
-  onClose,
-  onUpdateMastery,
-  dict,
-}: {
-  items: VocabItem[];
-  onClose: () => void;
-  onUpdateMastery: (id: string, got: boolean) => void;
-  dict: Record<string, string>;
-}) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [revealed, setRevealed] = useState(false);
-
-  const current = items[currentIndex];
-  const isLast = currentIndex === items.length - 1;
-
-  const handleResponse = useCallback(
-    (got: boolean) => {
-      onUpdateMastery(current.id, got);
-      setRevealed(false);
-      if (!isLast) {
-        setCurrentIndex((i) => i + 1);
-      } else {
-        onClose();
-      }
-    },
-    [current, isLast, onClose, onUpdateMastery]
-  );
-
-  const cefr = cefrColors[current.cefrLevel];
-
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/* Modal */}
-      <div className="relative w-full max-w-lg mx-4 animate-slide-up">
-        <div className="bg-surface border border-border rounded-3xl shadow-2xl overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-            <div className="flex items-center gap-3">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-accent"
-              >
-                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20" />
-              </svg>
-              <span className="font-semibold">{dict.review}</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-muted font-medium">
-                {currentIndex + 1}/{items.length}
-              </span>
-              <button
-                onClick={onClose}
-                className="p-1 rounded-lg hover:bg-surface-hover transition-colors"
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                >
-                  <path d="M18 6L6 18" />
-                  <path d="M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          {/* Progress bar */}
-          <div className="h-1 bg-border">
-            <div
-              className="h-full bg-accent transition-all duration-500 ease-out"
-              style={{
-                width: `${((currentIndex + 1) / items.length) * 100}%`,
-              }}
-            />
-          </div>
-
-          {/* Card content */}
-          <div className="px-8 py-10 text-center">
-            {/* CEFR badge */}
-            <span
-              className={`inline-block px-3 py-1 rounded-lg text-xs font-semibold border mb-5 ${cefr.bg} ${cefr.text} ${cefr.border}`}
-            >
-              {current.cefrLevel}
-            </span>
-
-            {/* Word */}
-            <h2 className="text-4xl font-bold font-serif tracking-tight mb-2">
-              {current.word}
-            </h2>
-
-            <p className="text-sm text-muted capitalize mb-8">
-              {current.category}
-            </p>
-
-            {/* Reveal area */}
-            {!revealed ? (
-              <button
-                onClick={() => setRevealed(true)}
-                className="w-full py-4 rounded-2xl border-2 border-dashed border-border text-muted hover:border-accent/40 hover:text-accent transition-all duration-200 text-sm font-medium"
-              >
-                Tap to reveal definition
-              </button>
-            ) : (
-              <div className="animate-fade-in space-y-4">
-                <p className="text-lg text-foreground/90 leading-relaxed">
-                  {current.definition}
-                </p>
-                <div className="bg-background rounded-xl px-5 py-4">
-                  <p className="text-sm italic text-foreground/70 leading-relaxed">
-                    &ldquo;{renderHighlightedExample(current.example)}&rdquo;
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Actions */}
-          {revealed && (
-            <div className="px-8 pb-8 flex gap-3 animate-fade-in">
-              <button
-                onClick={() => handleResponse(false)}
-                className="flex-1 py-3 rounded-xl border border-border text-foreground/70 hover:bg-surface-hover font-medium text-sm transition-all"
-              >
-                Need more practice
-              </button>
-              <button
-                onClick={() => handleResponse(true)}
-                className="flex-1 py-3 rounded-xl bg-accent text-white hover:bg-accent-dark font-medium text-sm transition-all shadow-sm"
-              >
-                Got it
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
 /*  Empty State                                                                */
 /* -------------------------------------------------------------------------- */
 
@@ -422,7 +261,6 @@ export default function VocabularyPage({
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
-  const [reviewOpen, setReviewOpen] = useState(false);
 
   // Load dictionary
   React.useEffect(() => {
@@ -505,42 +343,59 @@ export default function VocabularyPage({
     fetch(`/api/vocabulary?id=${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {});
   }, []);
 
-  const handleReviewUpdate = useCallback((id: string, got: boolean) => {
-    let nextProgress = 0;
-    let nextMastery: MasteryStatus = "new";
-    setVocabulary((prev) =>
-      prev.map((v) => {
-        if (v.id !== id) return v;
-        nextProgress = got
-          ? Math.min(5, v.masteryProgress + 1)
-          : Math.max(0, v.masteryProgress - 1);
-        nextMastery =
-          nextProgress >= 5 ? "mastered" : nextProgress >= 2 ? "learning" : "new";
-        return { ...v, masteryProgress: nextProgress, mastery: nextMastery };
-      })
-    );
-    fetch("/api/vocabulary", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, mastery_status: nextMastery, review_count: nextProgress }),
-    }).catch(() => {});
-  }, []);
+  const [exportOpen, setExportOpen] = useState(false);
 
-  const handleExport = useCallback(() => {
-    const csv = [
-      "Word,Definition,CEFR Level,Mastery,Example",
-      ...vocabulary.map(
-        (v) =>
-          `"${v.word}","${v.definition}","${v.cefrLevel}","${v.mastery}","${v.example.replace(/\*\*/g, "")}"`
-      ),
-    ].join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
+  const downloadBlob = (content: string, filename: string, mime: string) => {
+    const blob = new Blob([content], { type: mime });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "inkpath-vocabulary.csv";
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleExportCsv = useCallback(() => {
+    const escape = (s: string) => `"${s.replace(/"/g, '""')}"`;
+    const csv = [
+      "Word,Definition,CEFR Level,Mastery,Example",
+      ...vocabulary.map((v) =>
+        [
+          escape(v.word),
+          escape(v.definition),
+          escape(v.cefrLevel),
+          escape(v.mastery),
+          escape(v.example.replace(/\*\*/g, "")),
+        ].join(",")
+      ),
+    ].join("\n");
+    downloadBlob(csv, "inkpath-vocabulary.csv", "text/csv;charset=utf-8");
+    setExportOpen(false);
+  }, [vocabulary]);
+
+  // Anki-compatible TSV: Front \t Back \t Tags
+  // Front = word. Back = definition + example (in HTML).
+  // Tags include CEFR level and mastery so users can filter inside Anki.
+  const handleExportAnki = useCallback(() => {
+    const escape = (s: string) =>
+      s.replace(/\t/g, " ").replace(/\r?\n/g, "<br>");
+    const rows = vocabulary.map((v) => {
+      const back = `${escape(v.definition)}<br><br><i>${escape(
+        v.example.replace(/\*\*/g, "")
+      )}</i>`;
+      const tags = `inkpath ${v.cefrLevel} ${v.mastery}`.trim();
+      return [escape(v.word), back, tags].join("\t");
+    });
+    // First line is an Anki header so the import dialog auto-picks columns
+    const header = [
+      "#separator:tab",
+      "#html:true",
+      "#columns:Front\tBack\tTags",
+      "#tags column:3",
+    ].join("\n");
+    const tsv = `${header}\n${rows.join("\n")}`;
+    downloadBlob(tsv, "inkpath-vocabulary-anki.txt", "text/plain;charset=utf-8");
+    setExportOpen(false);
   }, [vocabulary]);
 
   // Loading state
@@ -593,10 +448,15 @@ export default function VocabularyPage({
 
         {/* Action buttons */}
         <div className="flex gap-2">
-          <button
-            onClick={() => reviewItems.length > 0 && setReviewOpen(true)}
-            disabled={reviewItems.length === 0}
-            className="flex items-center gap-2 px-5 py-2.5 bg-accent text-white rounded-xl text-sm font-medium hover:bg-accent-dark transition-all duration-200 shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
+          <Link
+            href={reviewItems.length > 0 ? `/${lang}/review` : "#"}
+            aria-disabled={reviewItems.length === 0}
+            onClick={(e) => {
+              if (reviewItems.length === 0) e.preventDefault();
+            }}
+            className={`flex items-center gap-2 px-5 py-2.5 bg-accent text-white rounded-xl text-sm font-medium hover:bg-accent-dark transition-all duration-200 shadow-sm ${
+              reviewItems.length === 0 ? "opacity-40 pointer-events-none" : ""
+            }`}
           >
             <svg
               width="16"
@@ -617,27 +477,59 @@ export default function VocabularyPage({
             {reviewItems.length > 0 && (
               <span className="text-white/70 text-xs">({reviewItems.length})</span>
             )}
-          </button>
-          <button
-            onClick={handleExport}
-            className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-border rounded-xl text-sm font-medium text-foreground hover:bg-surface-hover transition-all"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          </Link>
+
+          {/* Export dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setExportOpen((o) => !o)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-border rounded-xl text-sm font-medium text-foreground hover:bg-surface-hover transition-all"
             >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            {t.export}
-          </button>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              {t.export}
+            </button>
+            {exportOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setExportOpen(false)}
+                />
+                <div className="absolute right-0 top-full mt-2 w-56 bg-surface border border-border rounded-xl shadow-lg py-1 z-50 animate-fade-in">
+                  <button
+                    onClick={handleExportCsv}
+                    className="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-surface-hover transition-colors flex flex-col"
+                  >
+                    <span className="font-medium">CSV</span>
+                    <span className="text-[11px] text-muted">
+                      Spreadsheet-friendly
+                    </span>
+                  </button>
+                  <button
+                    onClick={handleExportAnki}
+                    className="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-surface-hover transition-colors flex flex-col"
+                  >
+                    <span className="font-medium">Anki</span>
+                    <span className="text-[11px] text-muted">
+                      TSV with Front/Back/Tags
+                    </span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -681,15 +573,6 @@ export default function VocabularyPage({
         </div>
       )}
 
-      {/* Review Modal */}
-      {reviewOpen && reviewItems.length > 0 && (
-        <ReviewModal
-          items={reviewItems}
-          onClose={() => setReviewOpen(false)}
-          onUpdateMastery={handleReviewUpdate}
-          dict={t}
-        />
-      )}
     </div>
   );
 }
