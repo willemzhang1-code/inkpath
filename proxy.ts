@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { updateSession } from "@/lib/supabase/proxy";
 
 const locales = ["en", "zh-CN", "ja", "ko", "vi", "th"];
 const defaultLocale = "en";
@@ -18,7 +19,7 @@ function getLocale(request: NextRequest): string {
   return defaultLocale;
 }
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (
@@ -30,16 +31,20 @@ export function proxy(request: NextRequest) {
     return;
   }
 
+  // Locale redirect (must happen before session refresh, since redirects don't carry cookies)
   const pathnameHasLocale = locales.some(
     (locale) =>
       pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
   );
 
-  if (pathnameHasLocale) return;
+  if (!pathnameHasLocale) {
+    const locale = getLocale(request);
+    request.nextUrl.pathname = `/${locale}${pathname}`;
+    return NextResponse.redirect(request.nextUrl);
+  }
 
-  const locale = getLocale(request);
-  request.nextUrl.pathname = `/${locale}${pathname}`;
-  return NextResponse.redirect(request.nextUrl);
+  // Refresh Supabase auth session (no-op if env vars missing)
+  return await updateSession(request);
 }
 
 export const config = {

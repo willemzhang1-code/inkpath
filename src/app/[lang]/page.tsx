@@ -1,5 +1,6 @@
 import { getDictionary, type Locale, locales, localeNames } from "@/lib/dictionaries";
 import Link from "next/link";
+import UpgradeButton from "@/components/UpgradeButton";
 
 export default async function LandingPage({
   params,
@@ -254,7 +255,7 @@ export default async function LandingPage({
       {/* ============================================================
           PRICING SECTION
           ============================================================ */}
-      <section className="relative py-24 sm:py-32 gradient-mesh">
+      <section id="pricing" className="relative py-24 sm:py-32 gradient-mesh">
         <div className="mx-auto max-w-5xl px-6">
           <h2 className="text-center font-serif text-3xl font-semibold tracking-tight sm:text-4xl">
             {t.pricingTitle}
@@ -313,24 +314,19 @@ export default async function LandingPage({
                 )}
               </ul>
 
-              <Link
-                href={`/${lang}/write`}
-                className="mt-8 block w-full rounded-xl bg-accent py-3 text-center text-sm font-medium text-white shadow-md shadow-accent/20 transition-all duration-300 hover:bg-accent-dark hover:shadow-lg hover:shadow-accent/30"
-              >
-                {t.cta}
-              </Link>
+              <UpgradeButton tier="plus" lang={lang} label={t.cta} variant="primary" />
             </div>
 
-            {/* Pro Tier */}
+            {/* Max Tier */}
             <div className="rounded-2xl border border-border bg-surface p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-              <h3 className="text-lg font-semibold">{t.pro}</h3>
+              <h3 className="text-lg font-semibold">{t.max}</h3>
               <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-4xl font-bold tracking-tight">{t.proPrice}</span>
-                <span className="text-muted">{t.proPeriod}</span>
+                <span className="text-4xl font-bold tracking-tight">{t.maxPrice}</span>
+                <span className="text-muted">{t.maxPeriod}</span>
               </div>
 
               <ul className="mt-8 space-y-3.5">
-                {[t.proFeature1, t.proFeature2, t.proFeature3, t.proFeature4, t.proFeature5, t.proFeature6].map(
+                {[t.maxFeature1, t.maxFeature2, t.maxFeature3, t.maxFeature4, t.maxFeature5, t.maxFeature6].map(
                   (f, i) => (
                     <li key={i} className="flex items-center gap-3 text-sm">
                       <svg className="h-4 w-4 shrink-0 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -342,12 +338,7 @@ export default async function LandingPage({
                 )}
               </ul>
 
-              <Link
-                href={`/${lang}/write`}
-                className="mt-8 block w-full rounded-xl border border-border py-3 text-center text-sm font-medium transition-all duration-300 hover:border-accent/30 hover:bg-surface-hover"
-              >
-                {t.cta}
-              </Link>
+              <UpgradeButton tier="max" lang={lang} label={t.cta} variant="secondary" />
             </div>
           </div>
         </div>

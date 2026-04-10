@@ -33,7 +33,7 @@ interface VocabItem {
   example: string;
 }
 
-interface MockFeedback {
+interface FeedbackData {
   bandScore: number;
   subScores: SubScore[];
   summary: string;
@@ -44,109 +44,56 @@ interface MockFeedback {
   reflectionPrompt: string;
 }
 
-// ---------------------------------------------------------------------------
-// Mock Data
-// ---------------------------------------------------------------------------
+// Shape returned by /api/feedback
+interface ApiFeedback {
+  assessment: {
+    bandScore: number;
+    taskAchievement: number;
+    coherence: number;
+    lexical: number;
+    grammar: number;
+    level: string;
+    summary: string;
+  };
+  corrections: {
+    original: string;
+    corrected: string;
+    explanation: string;
+    category: "grammar" | "vocabulary" | "coherence" | "style";
+  }[];
+  rewrite: { text: string; improvements: string[] };
+  vocabulary: {
+    word: string;
+    definition: string;
+    example: string;
+    cefrLevel: string;
+    category: string;
+  }[];
+  reflectionPrompt: string;
+}
 
-const MOCK_FEEDBACK: MockFeedback = {
-  bandScore: 6.5,
-  subScores: [
-    { label: "Task Achievement", key: "taskAchievement", score: 6.5 },
-    { label: "Coherence & Cohesion", key: "coherence", score: 7.0 },
-    { label: "Lexical Resource", key: "lexical", score: 6.0 },
-    { label: "Grammar Range & Accuracy", key: "grammar", score: 6.5 },
-  ],
-  summary:
-    "Your writing demonstrates a clear position with relevant ideas, though some could be developed further. Paragraphing is logical, and you use a range of cohesive devices. Vocabulary is adequate but could benefit from more sophisticated expressions. There are occasional grammatical errors that do not impede communication.",
-  corrections: [
-    {
-      category: "grammar",
-      original: "The number of students have increased significantly.",
-      corrected: "The number of students has increased significantly.",
-      explanation:
-        "\"The number of\" takes a singular verb because the subject is \"number,\" not \"students.\" This is a common subject-verb agreement error.",
-    },
-    {
-      category: "vocabulary",
-      original: "This is a very big problem in modern society.",
-      corrected: "This is a pervasive challenge in contemporary society.",
-      explanation:
-        "Replace vague intensifiers like \"very big\" with more precise, academic vocabulary. \"Pervasive\" and \"contemporary\" are band 7+ expressions.",
-    },
-    {
-      category: "coherence",
-      original:
-        "Many people think technology is bad. Technology helps us communicate.",
-      corrected:
-        "While many people argue that technology has detrimental effects, it undeniably facilitates communication.",
-      explanation:
-        "Connect contrasting ideas with a concessive clause rather than placing them in separate, disconnected sentences.",
-    },
-    {
-      category: "style",
-      original: "I think that we should do something about this problem.",
-      corrected: "It is imperative that decisive action be taken to address this issue.",
-      explanation:
-        "In academic writing, avoid first-person opinions with \"I think.\" Use impersonal constructions for a more authoritative tone.",
-    },
-  ],
-  rewrite:
-    "In recent decades, the proliferation of digital technology has fundamentally transformed the way people communicate, work, and access information. While some commentators contend that this rapid advancement has eroded interpersonal connections and exacerbated social isolation, a more nuanced examination reveals that technology, when leveraged thoughtfully, serves as an indispensable tool for fostering global connectivity.\n\nAdmittedly, excessive screen time has been linked to diminished face-to-face interaction, particularly among younger demographics. Research conducted by the University of Oxford suggests that individuals who spend more than four hours daily on social media platforms report lower levels of life satisfaction. This correlation underscores the importance of establishing healthy digital boundaries.\n\nNevertheless, the benefits of technological innovation are manifold. Telemedicine has revolutionized healthcare delivery in remote communities, while digital learning platforms have democratized access to education across socioeconomic strata. Furthermore, social media has empowered grassroots movements, enabling citizens to mobilize around shared causes with unprecedented speed and reach.\n\nIn conclusion, rather than condemning technology wholesale, society would benefit from cultivating digital literacy and promoting mindful engagement with digital tools. Only through such a balanced approach can we harness the transformative potential of technology while mitigating its adverse effects.",
-  rewriteAnnotations: [
-    "Opening uses a sophisticated noun phrase (\"proliferation of digital technology\") instead of simple vocabulary.",
-    "Concessive structure (\"While some... a more nuanced examination reveals\") demonstrates advanced argumentation.",
-    "Specific evidence (University of Oxford research) strengthens credibility and task achievement.",
-    "Varied sentence structures: complex, compound-complex, and periodic sentences throughout.",
-    "Conclusion offers a nuanced position rather than a simple agree/disagree, showing critical thinking.",
-  ],
-  vocabulary: [
-    {
-      word: "proliferation",
-      cefr: "C1",
-      definition: "A rapid increase in the number or amount of something.",
-      example:
-        "The proliferation of smartphones has changed daily life across the globe.",
-    },
-    {
-      word: "exacerbate",
-      cefr: "C1",
-      definition: "To make a problem, bad situation, or negative feeling worse.",
-      example: "The lack of funding will only exacerbate the housing crisis.",
-    },
-    {
-      word: "manifold",
-      cefr: "C2",
-      definition: "Many and of several different types.",
-      example:
-        "The manifold benefits of regular exercise extend well beyond physical health.",
-    },
-    {
-      word: "democratize",
-      cefr: "C1",
-      definition:
-        "To make something accessible to everyone, not just the privileged few.",
-      example:
-        "Online courses have helped democratize higher education worldwide.",
-    },
-    {
-      word: "mitigate",
-      cefr: "C1",
-      definition: "To make something less harmful, serious, or painful.",
-      example:
-        "Governments must take steps to mitigate the effects of climate change.",
-    },
-    {
-      word: "socioeconomic strata",
-      cefr: "C2",
-      definition:
-        "The different layers or levels of society based on income, education, and social status.",
-      example:
-        "Access to quality healthcare varies widely across socioeconomic strata.",
-    },
-  ],
-  reflectionPrompt:
-    "You wrote about technology and human connection. What role does technology play in your own relationships? Think of one moment this week where technology brought you closer to someone -- and one where it created distance.",
-};
+function adaptFeedback(api: ApiFeedback): FeedbackData {
+  return {
+    bandScore: api.assessment.bandScore,
+    subScores: [
+      { label: "Task Achievement", key: "taskAchievement", score: api.assessment.taskAchievement },
+      { label: "Coherence & Cohesion", key: "coherence", score: api.assessment.coherence },
+      { label: "Lexical Resource", key: "lexical", score: api.assessment.lexical },
+      { label: "Grammar Range & Accuracy", key: "grammar", score: api.assessment.grammar },
+    ],
+    summary: api.assessment.summary,
+    corrections: api.corrections,
+    rewrite: api.rewrite.text,
+    rewriteAnnotations: api.rewrite.improvements,
+    vocabulary: api.vocabulary.map((v) => ({
+      word: v.word,
+      cefr: v.cefrLevel,
+      definition: v.definition,
+      example: v.example,
+    })),
+    reflectionPrompt: api.reflectionPrompt,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Helper Components
@@ -270,6 +217,8 @@ export default function WritePage({
   const [pageState, setPageState] = useState<PageState>("empty");
   const [feedbackTab, setFeedbackTab] = useState<FeedbackTab>("assessment");
   const [savedWords, setSavedWords] = useState<Set<string>>(new Set());
+  const [feedback, setFeedback] = useState<FeedbackData | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -322,24 +271,65 @@ export default function WritePage({
     return `${m}:${sec.toString().padStart(2, "0")}`;
   };
 
-  // Submit handler
-  const handleSubmit = useCallback(() => {
+  // Submit handler — calls real Claude API
+  const handleSubmit = useCallback(async () => {
     if (wordCount < 5) return;
+    setError(null);
     setPageState("loading");
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, mode, lang }),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error || `Request failed (${res.status})`);
+      }
+      const apiData = (await res.json()) as ApiFeedback;
+      const adapted = adaptFeedback(apiData);
+      setFeedback(adapted);
       setPageState("feedback");
       setFeedbackTab("assessment");
-    }, 2400);
-  }, [wordCount]);
 
-  const handleSaveWord = useCallback((word: string) => {
-    setSavedWords((prev) => new Set(prev).add(word));
-  }, []);
+      // Persist entry to Supabase (best-effort, ignore errors)
+      fetch("/api/entries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, mode, feedback: apiData }),
+      }).catch(() => {});
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Something went wrong.";
+      setError(msg);
+      setPageState("empty");
+    }
+  }, [wordCount, text, mode, lang]);
+
+  const handleSaveWord = useCallback(
+    async (word: string) => {
+      setSavedWords((prev) => new Set(prev).add(word));
+      const item = feedback?.vocabulary.find((v) => v.word === word);
+      if (!item) return;
+      // Persist to Supabase (best-effort)
+      fetch("/api/vocabulary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          word: item.word,
+          definition: item.definition,
+          example: item.example,
+          cefr_level: item.cefr,
+        }),
+      }).catch(() => {});
+    },
+    [feedback]
+  );
 
   const handleReset = useCallback(() => {
     setPageState("empty");
     setFeedbackTab("assessment");
+    setFeedback(null);
+    setError(null);
   }, []);
 
   if (!dict) {
@@ -387,13 +377,13 @@ export default function WritePage({
           {t.feedback.overall} {t.feedback.bandScore}
         </p>
         <p className="band-score text-7xl font-bold tracking-tight">
-          {MOCK_FEEDBACK.bandScore.toFixed(1)}
+          {feedback!.bandScore.toFixed(1)}
         </p>
       </div>
 
       {/* Sub-scores Grid */}
       <div className="grid grid-cols-2 gap-4">
-        {MOCK_FEEDBACK.subScores.map((sub, i) => (
+        {feedback!.subScores.map((sub, i) => (
           <motion.div
             key={sub.key}
             initial={{ opacity: 0, scale: 0.9 }}
@@ -417,7 +407,7 @@ export default function WritePage({
         className="p-4 rounded-xl bg-surface border border-border"
       >
         <p className="text-sm text-foreground/80 leading-relaxed">
-          {MOCK_FEEDBACK.summary}
+          {feedback!.summary}
         </p>
       </motion.div>
     </motion.div>
@@ -430,7 +420,7 @@ export default function WritePage({
       transition={{ duration: 0.4 }}
       className="space-y-4"
     >
-      {MOCK_FEEDBACK.corrections.map((c, i) => (
+      {feedback!.corrections.map((c, i) => (
         <motion.div
           key={i}
           initial={{ opacity: 0, x: -8 }}
@@ -477,7 +467,7 @@ export default function WritePage({
       {/* Rewritten essay */}
       <div className="p-5 rounded-xl bg-surface border border-border">
         <div className="prose prose-sm max-w-none">
-          {MOCK_FEEDBACK.rewrite.split("\n\n").map((para, i) => (
+          {feedback!.rewrite.split("\n\n").map((para, i) => (
             <motion.p
               key={i}
               initial={{ opacity: 0 }}
@@ -496,7 +486,7 @@ export default function WritePage({
         <p className="text-xs text-muted uppercase tracking-wider font-medium">
           Key Improvements
         </p>
-        {MOCK_FEEDBACK.rewriteAnnotations.map((note, i) => (
+        {feedback!.rewriteAnnotations.map((note, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, x: -6 }}
@@ -523,7 +513,7 @@ export default function WritePage({
       transition={{ duration: 0.4 }}
       className="space-y-3"
     >
-      {MOCK_FEEDBACK.vocabulary.map((v, i) => {
+      {feedback!.vocabulary.map((v, i) => {
         const isSaved = savedWords.has(v.word);
         return (
           <motion.div
@@ -658,7 +648,7 @@ export default function WritePage({
             {t.growthPrompt}
           </p>
           <p className="text-sm text-foreground/75 leading-relaxed italic">
-            {MOCK_FEEDBACK.reflectionPrompt}
+            {feedback!.reflectionPrompt}
           </p>
         </motion.div>
       </div>
@@ -740,6 +730,13 @@ export default function WritePage({
             </motion.span>
           )}
         </div>
+
+        {/* Error banner */}
+        {error && (
+          <div className="mb-3 px-4 py-3 rounded-lg bg-error/10 border border-error/20 text-error text-sm shrink-0">
+            {error}
+          </div>
+        )}
 
         {/* Textarea */}
         <div className="flex-1 relative min-h-0">

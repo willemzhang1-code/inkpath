@@ -22,144 +22,40 @@ interface VocabItem {
   category: string;
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Mock Data                                                                  */
-/* -------------------------------------------------------------------------- */
+interface DbVocabRow {
+  id: string;
+  word: string;
+  definition: string;
+  example: string | null;
+  cefr_level: string | null;
+  category: string | null;
+  mastery_status: MasteryStatus;
+  review_count: number;
+  created_at: string;
+}
 
-const initialVocabulary: VocabItem[] = [
-  {
-    id: "1",
-    word: "albeit",
-    definition: "Although; even though",
-    example: "The project was successful, **albeit** more time-consuming than expected.",
-    cefrLevel: "C1",
-    sourceDate: "2026-04-08",
-    mastery: "learning",
-    masteryProgress: 3,
-    category: "academic",
-  },
-  {
-    id: "2",
-    word: "detrimental",
-    definition: "Tending to cause harm; damaging",
-    example: "Excessive screen time can be **detrimental** to children's development.",
-    cefrLevel: "B2",
-    sourceDate: "2026-04-07",
-    mastery: "mastered",
-    masteryProgress: 5,
-    category: "academic",
-  },
-  {
-    id: "3",
-    word: "encompass",
-    definition: "To surround or hold within; to include comprehensively",
-    example: "The curriculum should **encompass** both theoretical and practical knowledge.",
-    cefrLevel: "B2",
-    sourceDate: "2026-04-07",
-    mastery: "learning",
-    masteryProgress: 2,
-    category: "academic",
-  },
-  {
-    id: "4",
-    word: "juxtapose",
-    definition: "To place close together for contrasting effect",
-    example: "The author chose to **juxtapose** urban poverty with suburban affluence.",
-    cefrLevel: "C2",
-    sourceDate: "2026-04-06",
-    mastery: "new",
-    masteryProgress: 0,
-    category: "literary",
-  },
-  {
-    id: "5",
-    word: "mitigate",
-    definition: "To make less severe, serious, or painful",
-    example: "Governments must take steps to **mitigate** the effects of climate change.",
-    cefrLevel: "C1",
-    sourceDate: "2026-04-06",
-    mastery: "learning",
-    masteryProgress: 4,
-    category: "academic",
-  },
-  {
-    id: "6",
-    word: "paradigm",
-    definition: "A typical example or pattern of something; a model",
-    example: "The internet has brought about a **paradigm** shift in how we communicate.",
-    cefrLevel: "C1",
-    sourceDate: "2026-04-05",
-    mastery: "mastered",
-    masteryProgress: 5,
-    category: "academic",
-  },
-  {
-    id: "7",
-    word: "ubiquitous",
-    definition: "Present, appearing, or found everywhere",
-    example: "Smartphones have become **ubiquitous** in modern society.",
-    cefrLevel: "C1",
-    sourceDate: "2026-04-04",
-    mastery: "learning",
-    masteryProgress: 3,
-    category: "academic",
-  },
-  {
-    id: "8",
-    word: "eloquent",
-    definition: "Fluent or persuasive in speaking or writing",
-    example: "She delivered an **eloquent** speech about the importance of education.",
-    cefrLevel: "B2",
-    sourceDate: "2026-04-03",
-    mastery: "mastered",
-    masteryProgress: 5,
-    category: "descriptive",
-  },
-  {
-    id: "9",
-    word: "resilience",
-    definition: "The capacity to withstand or recover quickly from difficulties",
-    example: "The community showed remarkable **resilience** in the aftermath of the disaster.",
-    cefrLevel: "B2",
-    sourceDate: "2026-04-02",
-    mastery: "mastered",
-    masteryProgress: 5,
-    category: "personal growth",
-  },
-  {
-    id: "10",
-    word: "pragmatic",
-    definition: "Dealing with things sensibly and realistically",
-    example: "We need a **pragmatic** approach to solving this housing crisis.",
-    cefrLevel: "C1",
-    sourceDate: "2026-04-01",
-    mastery: "learning",
-    masteryProgress: 2,
-    category: "academic",
-  },
-  {
-    id: "11",
-    word: "ephemeral",
-    definition: "Lasting for a very short time; transitory",
-    example: "The beauty of cherry blossoms is **ephemeral**, lasting only a few days.",
-    cefrLevel: "C2",
-    sourceDate: "2026-03-30",
-    mastery: "new",
-    masteryProgress: 1,
-    category: "literary",
-  },
-  {
-    id: "12",
-    word: "meticulous",
-    definition: "Showing great attention to detail; very careful and precise",
-    example: "Her **meticulous** research earned her recognition from the academic community.",
-    cefrLevel: "B2",
-    sourceDate: "2026-03-28",
-    mastery: "learning",
-    masteryProgress: 4,
-    category: "descriptive",
-  },
-];
+function mapDbRow(row: DbVocabRow): VocabItem {
+  const validLevels: CEFRLevel[] = ["B1", "B2", "C1", "C2"];
+  const cefr = validLevels.includes(row.cefr_level as CEFRLevel)
+    ? (row.cefr_level as CEFRLevel)
+    : "B2";
+  // Map review_count → 0-5 progress
+  const progress =
+    row.mastery_status === "mastered"
+      ? 5
+      : Math.min(5, Math.max(0, row.review_count));
+  return {
+    id: row.id,
+    word: row.word,
+    definition: row.definition,
+    example: row.example ?? "",
+    cefrLevel: cefr,
+    sourceDate: row.created_at,
+    mastery: row.mastery_status,
+    masteryProgress: progress,
+    category: row.category ?? "academic",
+  };
+}
 
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                    */
@@ -522,7 +418,8 @@ export default function VocabularyPage({
 }) {
   const { lang } = React.use(params);
   const [dict, setDict] = useState<Record<string, Record<string, string>> | null>(null);
-  const [vocabulary, setVocabulary] = useState<VocabItem[]>(initialVocabulary);
+  const [vocabulary, setVocabulary] = useState<VocabItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
   const [reviewOpen, setReviewOpen] = useState(false);
@@ -533,6 +430,26 @@ export default function VocabularyPage({
       setDict(d as unknown as Record<string, Record<string, string>>)
     );
   }, [lang]);
+
+  // Load vocabulary from API
+  React.useEffect(() => {
+    let active = true;
+    fetch("/api/vocabulary")
+      .then((r) => (r.ok ? r.json() : { items: [] }))
+      .then((data: { items?: DbVocabRow[] }) => {
+        if (!active) return;
+        setVocabulary((data.items ?? []).map(mapDbRow));
+      })
+      .catch(() => {
+        if (active) setVocabulary([]);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const t = dict?.vocabulary ?? {} as Record<string, string>;
   const tc = dict?.common ?? {} as Record<string, string>;
@@ -576,24 +493,37 @@ export default function VocabularyPage({
         v.id === id ? { ...v, mastery: "mastered" as MasteryStatus, masteryProgress: 5 } : v
       )
     );
+    fetch("/api/vocabulary", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, mastery_status: "mastered" }),
+    }).catch(() => {});
   }, []);
 
   const handleDelete = useCallback((id: string) => {
     setVocabulary((prev) => prev.filter((v) => v.id !== id));
+    fetch(`/api/vocabulary?id=${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {});
   }, []);
 
   const handleReviewUpdate = useCallback((id: string, got: boolean) => {
+    let nextProgress = 0;
+    let nextMastery: MasteryStatus = "new";
     setVocabulary((prev) =>
       prev.map((v) => {
         if (v.id !== id) return v;
-        const newProgress = got
+        nextProgress = got
           ? Math.min(5, v.masteryProgress + 1)
           : Math.max(0, v.masteryProgress - 1);
-        const newMastery: MasteryStatus =
-          newProgress >= 5 ? "mastered" : newProgress >= 2 ? "learning" : "new";
-        return { ...v, masteryProgress: newProgress, mastery: newMastery };
+        nextMastery =
+          nextProgress >= 5 ? "mastered" : nextProgress >= 2 ? "learning" : "new";
+        return { ...v, masteryProgress: nextProgress, mastery: nextMastery };
       })
     );
+    fetch("/api/vocabulary", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, mastery_status: nextMastery, review_count: nextProgress }),
+    }).catch(() => {});
   }, []);
 
   const handleExport = useCallback(() => {
@@ -732,7 +662,11 @@ export default function VocabularyPage({
       </div>
 
       {/* Cards Grid or Empty State */}
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center py-24 text-muted text-sm animate-pulse-soft">
+          {tc.loading || "Loading..."}
+        </div>
+      ) : filtered.length === 0 ? (
         <EmptyState message={t.noWords || "Your vocabulary notebook is empty. Start writing to build it up!"} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

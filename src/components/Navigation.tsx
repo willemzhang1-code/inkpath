@@ -4,17 +4,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React, { useState } from "react";
 import { type Locale, localeNames } from "@/lib/dictionaries";
+import { signOut } from "@/app/auth/actions";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface NavigationProps {
   lang: Locale;
   dict: { nav: Record<string, string>; [key: string]: any };
+  userEmail?: string | null;
 }
 
-export function Navigation({ lang, dict }: NavigationProps) {
+export function Navigation({ lang, dict, userEmail }: NavigationProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const navItems = [
     { href: `/${lang}/write`, label: dict.nav.write, icon: "edit" },
@@ -120,13 +123,45 @@ export function Navigation({ lang, dict }: NavigationProps) {
               )}
             </div>
 
-            {/* CTA */}
-            <Link
-              href={`/${lang}/write`}
-              className="hidden sm:flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-dark transition-all duration-200 shadow-sm"
-            >
-              {dict.nav.startWriting}
-            </Link>
+            {/* User menu OR CTA */}
+            {userEmail ? (
+              <div className="relative hidden sm:block">
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-surface-hover transition-all"
+                >
+                  <div className="w-7 h-7 rounded-full bg-accent text-white flex items-center justify-center text-xs font-medium">
+                    {userEmail.charAt(0).toUpperCase()}
+                  </div>
+                </button>
+                {userMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
+                    <div className="absolute right-0 top-full mt-2 w-56 bg-surface border border-border rounded-xl shadow-lg py-2 z-50 animate-fade-in">
+                      <div className="px-4 py-2 border-b border-border">
+                        <p className="text-xs text-muted">Signed in as</p>
+                        <p className="text-sm font-medium truncate">{userEmail}</p>
+                      </div>
+                      <form action={signOut.bind(null, lang)}>
+                        <button
+                          type="submit"
+                          className="w-full text-left px-4 py-2.5 text-sm text-foreground hover:bg-surface-hover transition-colors"
+                        >
+                          {lang === "zh-CN" ? "退出登录" : lang === "ja" ? "ログアウト" : "Sign out"}
+                        </button>
+                      </form>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <Link
+                href={`/${lang}/auth/login`}
+                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-dark transition-all duration-200 shadow-sm"
+              >
+                {dict.nav.signIn}
+              </Link>
+            )}
 
             {/* Mobile menu button */}
             <button

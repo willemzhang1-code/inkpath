@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
 import { getDictionary, type Locale, locales } from "@/lib/dictionaries";
 import { Navigation } from "@/components/Navigation";
+import { createClient } from "@/lib/supabase/server";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,13 +42,25 @@ export default async function LangLayout({
   const { lang } = await params;
   const dict = await getDictionary(lang as Locale);
 
+  // Fetch user (gracefully handles missing Supabase config)
+  let userEmail: string | null = null;
+  try {
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      const supabase = await createClient();
+      const { data } = await supabase.auth.getUser();
+      userEmail = data.user?.email ?? null;
+    }
+  } catch {
+    // Auth not configured yet — render as logged-out
+  }
+
   return (
     <html
       lang={lang}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <Navigation lang={lang as Locale} dict={dict} />
+        <Navigation lang={lang as Locale} dict={dict} userEmail={userEmail} />
         <main className="flex-1">{children}</main>
       </body>
     </html>

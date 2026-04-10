@@ -1,11 +1,11 @@
 {
   "nav": { "write": "Viết", "dashboard": "Phát triển", "vocabulary": "Từ vựng", "settings": "Cài đặt", "signIn": "Đăng nhập", "startWriting": "Bắt đầu viết" },
   "landing": {
-    "badge": "Một mũi tên trúng hai đích",
-    "headline": "Viết để",
-    "headlineHighlight": "trưởng thành",
-    "subheadline": "Nâng cao kỹ năng viết tiếng Anh trong khi khám phá bản thân. Nhật ký, quan sát, luận văn — viết bất cứ điều gì và nhận phản hồi chuyên nghiệp cấp IELTS.",
-    "cta": "Bắt đầu hành trình", "ctaSecondary": "Tìm hiểu thêm", "trusted": "Được tin dùng tại", "countries": "hơn 12 quốc gia",
+    "badge": "AI huấn luyện viết · Phản hồi cấp IELTS trong 30 giây",
+    "headline": "Mọi câu tiếng Anh bạn viết, đều nhận được",
+    "headlineHighlight": "phản hồi cấp IELTS",
+    "subheadline": "Nhật ký, tiểu luận, email, bài IELTS — bất kỳ văn bản tiếng Anh nào, trong 30 giây nhận điểm IELTS, sửa từng câu, viết lại nâng cao và từ vựng mới. Vừa viết về cuộc sống thật, vừa nâng tiếng Anh lên IELTS 7.",
+    "cta": "Bắt đầu viết miễn phí", "ctaSecondary": "Xem cách hoạt động", "trusted": "Được tin dùng tại", "countries": "hơn 12 quốc gia",
     "feature1Title": "Phản hồi chuyên nghiệp", "feature1Desc": "Chấm điểm cấp giám khảo IELTS. Phân tích 4 lớp: đánh giá, sửa lỗi, viết lại nâng cao, trích xuất từ vựng.",
     "feature2Title": "Phát triển bản thân", "feature2Desc": "Viết là tấm gương. Theo dõi cảm xúc, phát hiện xu hướng, nhận insight tăng trưởng từ AI.",
     "feature3Title": "Từ vựng thông minh", "feature3Desc": "Tự động trích xuất từ bài viết lại, phân loại theo CEFR, ôn tập với lặp cách quãng.",
@@ -24,9 +24,9 @@
     "plus": "Plus", "plusPrice": "$2.99", "plusPeriod": "/tháng",
     "plusFeature1": "Không giới hạn bài viết", "plusFeature2": "Phản hồi 4 lớp đầy đủ", "plusFeature3": "Module phát triển & insight",
     "plusFeature4": "Sổ từ vựng đầy đủ", "plusFeature5": "Báo cáo phát triển hàng tuần",
-    "pro": "Pro", "proPrice": "$19.99", "proPeriod": "/tháng",
-    "proFeature1": "Tất cả Plus", "proFeature2": "AI cao cấp", "proFeature3": "Chuyên gia IELTS review 1-1",
-    "proFeature4": "Phân tích phát triển nâng cao", "proFeature5": "Xử lý ưu tiên", "proFeature6": "Viết có hướng dẫn",
+    "max": "Max", "maxPrice": "$9.99", "maxPeriod": "/tháng",
+    "maxFeature1": "Tất cả tính năng Plus", "maxFeature2": "AI cao cấp (Claude Opus phân tích sâu)", "maxFeature3": "Bài luận dài tới 3.000 từ",
+    "maxFeature4": "Xử lý ưu tiên", "maxFeature5": "Phân tích phát triển nâng cao", "maxFeature6": "Viết có hướng dẫn",
     "mostPopular": "Phổ biến nhất"
   },
   "write": {

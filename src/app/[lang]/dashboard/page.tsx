@@ -1,22 +1,31 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { getDictionary, type Locale } from "@/lib/dictionaries";
 
 // ---------------------------------------------------------------------------
-// Mock data
+// Types from API
 // ---------------------------------------------------------------------------
 
-const BAND_SCORES = [
-  5.5, 5.5, 5.5, 6.0, 5.5, 6.0, 6.0, 5.5, 6.0, 6.0,
-  6.0, 6.5, 6.0, 6.0, 6.5, 6.0, 6.5, 6.5, 6.0, 6.5,
-  6.5, 6.5, 7.0, 6.5, 6.5, 7.0, 6.5, 7.0, 6.5, 6.5,
-];
+interface DbEntry {
+  id: string;
+  mode: string;
+  content: string;
+  word_count: number;
+  band_score: number | null;
+  feedback: {
+    assessment?: { bandScore?: number; summary?: string };
+    vocabulary?: Array<{ word: string }>;
+  } | null;
+  created_at: string;
+}
 
-const HEATMAP_DATA: number[][] = Array.from({ length: 12 }, () =>
-  Array.from({ length: 7 }, () => Math.random() > 0.3 ? Math.floor(Math.random() * 4) : 0)
-);
+// ---------------------------------------------------------------------------
+// Defaults — used when there are no entries yet
+// ---------------------------------------------------------------------------
+
+const DEFAULT_BAND_SCORES = Array.from({ length: 30 }, () => 6.0);
 
 const EMOTIONS = [
   { name: "Grateful", size: 72, color: "#52B788" },
@@ -37,13 +46,6 @@ const TOP_EMOTIONS = [
   { name: "Anxious", pct: 11 },
 ];
 
-const RECENT_ENTRIES = [
-  { date: "Apr 9", title: "Morning walk by the lake", band: 7.0, emotion: "Peaceful" },
-  { date: "Apr 8", title: "Reflecting on career choices", band: 6.5, emotion: "Reflective" },
-  { date: "Apr 7", title: "Letter to my younger self", band: 6.5, emotion: "Grateful" },
-  { date: "Apr 5", title: "Dealing with uncertainty", band: 6.0, emotion: "Anxious" },
-  { date: "Apr 4", title: "Small wins this week", band: 6.5, emotion: "Hopeful" },
-];
 
 const GROWTH_PATHS = [
   { name: "Self-Discovery", days: 14, progress: 0.57 },
@@ -121,10 +123,106 @@ export default function DashboardPage({
 }) {
   const { lang } = React.use(params);
   const [dict, setDict] = useState<Record<string, Record<string, string>> | null>(null);
+  const [entries, setEntries] = useState<DbEntry[]>([]);
+  const [vocabCount, setVocabCount] = useState(0);
 
   useEffect(() => {
     getDictionary(lang as Locale).then((d) => setDict(d as unknown as Record<string, Record<string, string>>));
   }, [lang]);
+
+  useEffect(() => {
+    fetch("/api/entries")
+      .then((r) => (r.ok ? r.json() : { entries: [] }))
+      .then((data: { entries?: DbEntry[] }) => setEntries(data.entries ?? []))
+      .catch(() => setEntries([]));
+    fetch("/api/vocabulary")
+      .then((r) => (r.ok ? r.json() : { items: [] }))
+      .then((data: { items?: unknown[] }) => setVocabCount((data.items ?? []).length))
+      .catch(() => setVocabCount(0));
+  }, []);
+
+  // Derived metrics
+  const totalEntries = entries.length;
+  const bandScores = useMemo(() => {
+    const scores = entries
+      .slice()
+      .reverse()
+      .map((e) => e.band_score ?? e.feedback?.assessment?.bandScore ?? null)
+      .filter((s): s is number => s != null);
+    return scores.length > 0 ? scores : DEFAULT_BAND_SCORES;
+  }, [entries]);
+
+  const avgBand = useMemo(() => {
+    const real = entries
+      .map((e) => e.band_score ?? e.feedback?.assessment?.bandScore ?? null)
+      .filter((s): s is number => s != null);
+    if (real.length === 0) return null;
+    return real.reduce((a, b) => a + b, 0) / real.length;
+  }, [entries]);
+
+  const streak = useMemo(() => {
+    if (entries.length === 0) return 0;
+    const days = new Set(
+      entries.map((e) => new Date(e.created_at).toISOString().slice(0, 10))
+    );
+    let count = 0;
+    const cursor = new Date();
+    while (true) {
+      const key = cursor.toISOString().slice(0, 10);
+      if (days.has(key)) {
+        count += 1;
+        cursor.setDate(cursor.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    return count;
+  }, [entries]);
+
+  // Heatmap: 12 weeks × 7 days, count entries per day
+  const heatmapData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    entries.forEach((e) => {
+      const key = new Date(e.created_at).toISOString().slice(0, 10);
+      counts[key] = (counts[key] ?? 0) + 1;
+    });
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    // Find Monday of current week (assume Mon=1)
+    const dayOfWeek = (today.getDay() + 6) % 7; // 0=Mon..6=Sun
+    const thisMonday = new Date(today);
+    thisMonday.setDate(today.getDate() - dayOfWeek);
+    const grid: number[][] = [];
+    for (let w = 11; w >= 0; w--) {
+      const week: number[] = [];
+      const weekStart = new Date(thisMonday);
+      weekStart.setDate(thisMonday.getDate() - w * 7);
+      for (let d = 0; d < 7; d++) {
+        const day = new Date(weekStart);
+        day.setDate(weekStart.getDate() + d);
+        const key = day.toISOString().slice(0, 10);
+        const c = counts[key] ?? 0;
+        const level = c === 0 ? 0 : c === 1 ? 1 : c === 2 ? 2 : 3;
+        week.push(level);
+      }
+      grid.push(week);
+    }
+    return grid;
+  }, [entries]);
+
+  const recentEntries = useMemo(
+    () =>
+      entries.slice(0, 5).map((e) => {
+        const dateObj = new Date(e.created_at);
+        const date = dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        const title =
+          e.content.trim().split(/\s+/).slice(0, 8).join(" ") +
+          (e.content.trim().split(/\s+/).length > 8 ? "..." : "");
+        const band = e.band_score ?? e.feedback?.assessment?.bandScore ?? 0;
+        return { date, title, band, emotion: "Reflective" };
+      }),
+    [entries]
+  );
 
   if (!dict) {
     return (
@@ -139,7 +237,7 @@ export default function DashboardPage({
   // SVG chart dimensions
   const chartW = 560;
   const chartH = 200;
-  const linePath = buildBezierPath(BAND_SCORES, chartW, chartH);
+  const linePath = buildBezierPath(bandScores, chartW, chartH);
 
   // Sparkline for mood
   const sparkW = 180;
@@ -169,7 +267,7 @@ export default function DashboardPage({
         {/* ----------------------------------------------------------------- */}
         <StatCard
           label={t.streak}
-          value="14"
+          value={String(streak)}
           icon={
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2c.4 4.93-2.37 7.5-4.5 9.5C5.37 13.5 4 15.93 4 19c0 3 2.5 5 8 5s8-2 8-5c0-3.07-1.37-5.5-3.5-7.5-.53-.5-1.07-1.03-1.5-1.62" />
@@ -178,7 +276,7 @@ export default function DashboardPage({
           }
           accent
         />
-        <StatCard label={t.totalEntries} value="47" icon={
+        <StatCard label={t.totalEntries} value={String(totalEntries)} icon={
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
             <polyline points="14 2 14 8 20 8" />
@@ -189,16 +287,15 @@ export default function DashboardPage({
         } />
         <StatCard
           label={t.avgBand}
-          value="6.5"
+          value={avgBand != null ? avgBand.toFixed(1) : "—"}
           icon={
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#40916C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
               <polyline points="16 7 22 7 22 13" />
             </svg>
           }
-          trend="+0.5"
         />
-        <StatCard label={t.vocabLearned} value="234" icon={
+        <StatCard label={t.vocabLearned} value={String(vocabCount)} icon={
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
             <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
@@ -256,7 +353,7 @@ export default function DashboardPage({
               />
               {/* Endpoint dot */}
               {(() => {
-                const pts = BAND_SCORES;
+                const pts = bandScores;
                 const lastX = chartW;
                 const min = Math.min(...pts);
                 const max = Math.max(...pts);
@@ -294,7 +391,7 @@ export default function DashboardPage({
                 <div key={d} className="h-[14px] text-[9px] text-muted leading-[14px]">{d}</div>
               ))}
             </div>
-            {HEATMAP_DATA.map((week, wi) => (
+            {heatmapData.map((week, wi) => (
               <div key={wi} className="flex flex-col gap-1">
                 {week.map((level, di) => (
                   <motion.div
@@ -465,7 +562,12 @@ export default function DashboardPage({
         >
           <h2 className="text-sm font-semibold text-muted mb-4">{t.recentEntries}</h2>
           <ul className="divide-y divide-border">
-            {RECENT_ENTRIES.map((entry, i) => (
+            {recentEntries.length === 0 && (
+              <li className="py-6 text-center text-sm text-muted">
+                No entries yet. Start writing to see your journey here.
+              </li>
+            )}
+            {recentEntries.map((entry, i) => (
               <motion.li
                 key={i}
                 className="flex items-center gap-3 py-3 first:pt-0 last:pb-0 cursor-pointer hover:bg-surface-hover -mx-3 px-3 rounded-lg transition-colors"
